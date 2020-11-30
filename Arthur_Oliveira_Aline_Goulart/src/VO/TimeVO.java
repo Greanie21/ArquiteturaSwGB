@@ -30,6 +30,14 @@ public class TimeVO {
         this.patrimonio = patrimonio;
     }
 
+    public TimeVO(int id, String escudo, Date fundacao, String nome, BigDecimal patrimonio) {
+        this.id = id;
+        this.escudo = escudo;
+        this.fundacao = fundacao;
+        this.nome = nome;
+        this.patrimonio = patrimonio;
+    }
+
     public int getId() {
         return id;
     }

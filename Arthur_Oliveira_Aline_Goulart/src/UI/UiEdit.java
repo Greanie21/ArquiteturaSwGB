@@ -16,11 +16,12 @@ import java.math.BigDecimal;
 import java.nio.channels.FileChannel;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.text.MaskFormatter;
 
@@ -28,18 +29,19 @@ import javax.swing.text.MaskFormatter;
  *
  * @author abol9
  */
-public class UiInsert extends javax.swing.JFrame {
+public class UiEdit extends javax.swing.JFrame {
 
     MaskFormatter formatoDate;
+    int id;
+    String oldName;
     UiPrincipal framePai;
 
     /**
-     * Creates new form UiInsert
+     * Creates new form UiEdit
      */
-    public UiInsert(UiPrincipal framePai) {
+    public UiEdit(UiPrincipal framePai) {
         initComponents();
         this.setLocationRelativeTo(null);
-        this.setVisible(true);
         this.framePai=framePai;
     }
 
@@ -52,7 +54,7 @@ public class UiInsert extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        btnSave = new javax.swing.JButton();
+        btnEdit = new javax.swing.JButton();
         btnBack = new javax.swing.JButton();
         lbEscudo = new javax.swing.JLabel();
         lbFundacao = new javax.swing.JLabel();
@@ -65,12 +67,12 @@ public class UiInsert extends javax.swing.JFrame {
         txtFormattedFundacao = new JFormattedTextField(formatoDate);
         btnProcurarImg = new javax.swing.JButton();
 
-        setType(java.awt.Window.Type.POPUP);
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        btnSave.setText("Salvar");
-        btnSave.addActionListener(new java.awt.event.ActionListener() {
+        btnEdit.setText("Editar");
+        btnEdit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnSaveActionPerformed(evt);
+                btnEditActionPerformed(evt);
             }
         });
 
@@ -105,8 +107,8 @@ public class UiInsert extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(btnBack)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 257, Short.MAX_VALUE)
-                        .addComponent(btnSave))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 258, Short.MAX_VALUE)
+                        .addComponent(btnEdit))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lbPatrimonio)
@@ -119,7 +121,7 @@ public class UiInsert extends javax.swing.JFrame {
                             .addComponent(txtEscudo, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
                             .addComponent(txtPatrimonio, javax.swing.GroupLayout.DEFAULT_SIZE, 144, Short.MAX_VALUE)
                             .addComponent(txtFormattedFundacao))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(btnProcurarImg)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
@@ -135,18 +137,18 @@ public class UiInsert extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbFundacao)
                     .addComponent(txtFormattedFundacao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(40, 40, 40)
+                .addGap(37, 37, 37)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbEscudo)
                     .addComponent(txtEscudo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnProcurarImg))
-                .addGap(39, 39, 39)
+                .addGap(34, 34, 34)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lbPatrimonio)
                     .addComponent(txtPatrimonio, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 49, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 57, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnSave)
+                    .addComponent(btnEdit)
                     .addComponent(btnBack))
                 .addGap(16, 16, 16))
         );
@@ -154,7 +156,7 @@ public class UiInsert extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSaveActionPerformed
+    private void btnEditActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEditActionPerformed
         // TODO add your handling code here:
         TimeBAL timeBAL = new TimeBAL();
 
@@ -168,7 +170,8 @@ public class UiInsert extends javax.swing.JFrame {
         }
 
         String nome = txtNome.getText();
-
+        editarNomeImg();
+        
         BigDecimal patrimonio = BigDecimal.ZERO;
         try {
             patrimonio = new BigDecimal(txtPatrimonio.getText());
@@ -180,28 +183,20 @@ public class UiInsert extends javax.swing.JFrame {
         TimeVO time = new TimeVO(escudo, fund, nome, patrimonio);
 
         try {
-            timeBAL.Insert(time);
+            timeBAL.Edit(time, id);
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, ex);
+            //exceção ja lançada
             return;
         }
-
-        Limpar();
+        
         try {
             framePai.Carregar();
         } catch (SQLException ex) {
             Logger.getLogger(UiInsert.class.getName()).log(Level.SEVERE, null, ex);
         }
-        JOptionPane.showMessageDialog(null, "Cadastro salvo com sucesso");
+        JOptionPane.showMessageDialog(null, "Cadastro editado com sucesso");
         this.setVisible(false);
-    }//GEN-LAST:event_btnSaveActionPerformed
-
-    private void Limpar() {
-        txtEscudo.setText("");
-        txtFormattedFundacao.setText("");
-        txtNome.setText("");
-        txtPatrimonio.setText("");
-    }
+    }//GEN-LAST:event_btnEditActionPerformed
 
     private void btnBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBackActionPerformed
         // TODO add your handling code here:
@@ -227,7 +222,7 @@ public class UiInsert extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_btnProcurarImgActionPerformed
-
+                                      
     public void copiar(File fonte, File destino) throws FileNotFoundException, IOException {
         FileChannel in = new FileInputStream(fonte).getChannel();
         FileChannel out = new FileOutputStream(destino).getChannel();
@@ -235,6 +230,48 @@ public class UiInsert extends javax.swing.JFrame {
 
         in.close();
         out.close();
+    }
+    
+    public void editarNomeImg()
+    {
+        File f = new File("src/imagens/" + oldName + ".jpg");
+        File copia = new File("src/imagens/" + txtNome.getText() + ".jpg");
+        if (!copia.exists()) {
+            try {
+                copiar(f, copia);
+            }catch (IOException ex) {
+                Logger.getLogger(UiInsert.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+    public void DeixarVisivel(TimeVO time) throws ParseException {
+        this.setVisible(true);
+
+        txtEscudo.setText(time.getEscudo());
+        //txtFormattedFundacao.setText(time.getFundacao().toString());
+        //1997-09-21
+        //21091997
+        String datecorretc = time.getFundacao().toString();
+        datecorretc=datecorretc.replace("-", "");
+        String reverse = "";
+        reverse += datecorretc.charAt(6);
+        reverse += datecorretc.charAt(7);
+
+        reverse += datecorretc.charAt(4);
+        reverse += datecorretc.charAt(5);
+
+        reverse += datecorretc.charAt(0);
+        reverse += datecorretc.charAt(1);
+        reverse += datecorretc.charAt(2);
+        reverse += datecorretc.charAt(3);
+        
+        txtFormattedFundacao.setText(reverse);
+        txtNome.setText(time.getNome());
+        txtPatrimonio.setText(time.getPatrimonio().toString());
+        
+        id=time.getId();
+        oldName=time.getNome();
     }
 
     /**
@@ -254,28 +291,28 @@ public class UiInsert extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(UiInsert.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UiEdit.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(UiInsert.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UiEdit.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(UiInsert.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UiEdit.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(UiInsert.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(UiEdit.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new UiInsert(null).setVisible(true);
+                new UiEdit(null).setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBack;
+    private javax.swing.JButton btnEdit;
     private javax.swing.JButton btnProcurarImg;
-    private javax.swing.JButton btnSave;
     private javax.swing.JLabel lbEscudo;
     private javax.swing.JLabel lbFundacao;
     private javax.swing.JLabel lbNome;

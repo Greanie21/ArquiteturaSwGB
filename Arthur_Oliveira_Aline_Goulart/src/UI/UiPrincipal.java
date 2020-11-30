@@ -5,17 +5,36 @@
  */
 package UI;
 
+import BAL.TimeBAL;
+import VO.TimeVO;
+import java.awt.Image;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.ImageIcon;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+
 /**
  *
  * @author abol9
  */
 public class UiPrincipal extends javax.swing.JFrame {
 
+    int selectedRow = -1;
+
     /**
      * Creates new form UiPrincipal
      */
-    public UiPrincipal() {
+    public UiPrincipal() throws SQLException {
         initComponents();
+        this.Carregar();
         this.setLocationRelativeTo(null);
     }
 
@@ -29,6 +48,11 @@ public class UiPrincipal extends javax.swing.JFrame {
     private void initComponents() {
 
         btnInsert = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        table = new javax.swing.JTable();
+        btnUpdate = new javax.swing.JButton();
+        btnDelete = new javax.swing.JButton();
+        lbImg = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -39,20 +63,83 @@ public class UiPrincipal extends javax.swing.JFrame {
             }
         });
 
+        table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
+            },
+            new String [] {
+                "Id", "Nome", "Data Fundação", "Patrimonio", "Escudo"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                true, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tableMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(table);
+
+        btnUpdate.setText("Atualizar");
+        btnUpdate.setEnabled(false);
+        btnUpdate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnUpdateActionPerformed(evt);
+            }
+        });
+
+        btnDelete.setText("Deletar");
+        btnDelete.setEnabled(false);
+        btnDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDeleteActionPerformed(evt);
+            }
+        });
+
+        lbImg.setToolTipText("background Escudo");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(btnInsert)
-                .addContainerGap(327, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 329, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 11, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnInsert)
+                        .addGap(59, 59, 59)
+                        .addComponent(btnUpdate)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnDelete))))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(34, 34, 34)
+                .addComponent(lbImg, javax.swing.GroupLayout.PREFERRED_SIZE, 277, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(266, Short.MAX_VALUE)
-                .addComponent(btnInsert)
+                .addGap(21, 21, 21)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(lbImg, javax.swing.GroupLayout.DEFAULT_SIZE, 279, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btnInsert)
+                    .addComponent(btnUpdate)
+                    .addComponent(btnDelete))
                 .addContainerGap())
         );
 
@@ -61,9 +148,85 @@ public class UiPrincipal extends javax.swing.JFrame {
 
     private void btnInsertActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInsertActionPerformed
         // TODO add your handling code here:
-        UiInsert u=new UiInsert();
-        u.setVisible(true);
+        UiInsert u = new UiInsert(this);
     }//GEN-LAST:event_btnInsertActionPerformed
+
+    private void btnUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnUpdateActionPerformed
+        // TODO add your handling code here:
+        try {
+            TableModel tm = table.getModel();
+            int id = Integer.parseInt((String) tm.getValueAt(selectedRow, 0));
+            String escudo = (String) tm.getValueAt(selectedRow, 4);
+            Date fundacao = new TimeBAL().VerificarData((String) tm.getValueAt(selectedRow, 2));
+
+            String nome = (String) tm.getValueAt(selectedRow, 1);
+            BigDecimal patrimonio = new BigDecimal((String)tm.getValueAt(selectedRow, 3));
+
+            TimeVO timeVO = new TimeVO(id, escudo, fundacao, nome, patrimonio);
+
+            UiEdit u = new UiEdit(this);
+            u.DeixarVisivel(timeVO);
+
+        } catch (Exception ex) {
+            Logger.getLogger(UiPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnUpdateActionPerformed
+
+    private void tableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableMouseClicked
+        // TODO add your handling code here:
+        selectedRow = table.rowAtPoint(evt.getPoint());
+        
+        btnUpdate.setEnabled(true);
+        btnDelete.setEnabled(true);
+        
+        String img = "src/imagens/"+table.getModel().getValueAt(table.getSelectedRow(), 1).toString()+".jpg"; 
+       ImageIcon imageIcon = new ImageIcon(new ImageIcon(img).getImage().getScaledInstance(250, 250, Image.SCALE_DEFAULT));
+
+       lbImg.setIcon(imageIcon);
+    }//GEN-LAST:event_tableMouseClicked
+
+    private void btnDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDeleteActionPerformed
+        // TODO add your handling code here:
+        TableModel tm = table.getModel();
+        int id = Integer.parseInt((String) tm.getValueAt(selectedRow, 0));
+
+        TimeBAL timeBal = new TimeBAL();
+
+        try {
+            timeBal.Delete(id);
+
+            Carregar();
+            btnUpdate.setEnabled(false);
+            btnDelete.setEnabled(false);
+        } catch (SQLException ex) {
+            Logger.getLogger(UiPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnDeleteActionPerformed
+
+    public void Carregar() throws SQLException {
+
+        DefaultTableModel tab = (DefaultTableModel) table.getModel();
+        tab.setNumRows(0);
+        ArrayList<TimeVO> lista;
+        TimeBAL funBAL = new TimeBAL();
+
+        lista = funBAL.Read();
+
+        for (TimeVO timeVO : lista) {
+
+            String id = String.valueOf(timeVO.getId());
+            String nome = timeVO.getNome();
+            String patrimonio = timeVO.getPatrimonio().toString();
+
+            LocalDate date = timeVO.getFundacao().toLocalDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String dataFund = date.format(formatter);
+
+            String escudo = timeVO.getEscudo();
+
+            tab.addRow(new String[]{id, nome, dataFund, patrimonio, escudo});
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -95,12 +258,21 @@ public class UiPrincipal extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new UiPrincipal().setVisible(true);
+                try {
+                    new UiPrincipal().setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(UiPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnDelete;
     private javax.swing.JButton btnInsert;
+    private javax.swing.JButton btnUpdate;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lbImg;
+    private javax.swing.JTable table;
     // End of variables declaration//GEN-END:variables
 }

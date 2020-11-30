@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 /**
  *
@@ -25,8 +26,22 @@ public class TimeBAL {
         return new TimeDAO().Insert(time);
     }
 
-    public ResultSet Read() throws SQLException {
-        return new TimeDAO().Read();
+    public ArrayList Read() throws SQLException {
+        ArrayList array = new ArrayList();
+
+        ResultSet rs = new TimeDAO().Read();
+
+        while (rs.next()) {
+            TimeVO timeVO = new TimeVO(
+                    rs.getInt("id"),
+                    rs.getString("escudo"),
+                    rs.getDate("fundacao"),
+                    rs.getString("nome"),
+                    rs.getBigDecimal("patrimonio"));
+
+            array.add(timeVO);
+        }
+        return array;
     }
 
     public ResultSet Read(int id) throws SQLException {
